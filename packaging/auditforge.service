@@ -1,0 +1,42 @@
+[Unit]
+Description=AuditForge audit log collector
+Documentation=file:/usr/share/doc/auditforge/README.md
+After=auditd.service
+Wants=auditd.service
+
+[Service]
+Type=simple
+User=auditforge
+Group=auditforge
+ExecStart=/usr/bin/auditforge run --input /var/log/audit/audit.log
+Restart=on-failure
+RestartSec=5s
+StateDirectory=auditforge
+StateDirectoryMode=0750
+WorkingDirectory=/var/lib/auditforge
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=auditforge
+KillSignal=SIGTERM
+TimeoutStopSec=30s
+
+# ProtectSystem=strict makes the filesystem read-only. Re-open only the
+# state directory and the audit log directory.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/auditforge
+ReadOnlyPaths=/var/log/audit
+
+# Permission limitation: on Oracle Linux and Fedora, /var/log/audit/audit.log
+# is usually mode 0600 and owned by root. The auditforge user cannot read it
+# until an administrator grants access, for example:
+#   setfacl -m u:auditforge:rx /var/log/audit
+#   setfacl -m u:auditforge:r /var/log/audit/audit.log
+# The unit stays unprivileged on purpose. A local drop-in can set User=root
+# if a site accepts that tradeoff. /var/log/audit must exist or systemd will
+# fail to apply ReadOnlyPaths.
+
+[Install]
+WantedBy=multi-user.target

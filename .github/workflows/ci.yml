@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  rust:
+    name: fmt, clippy, test, release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: cargo fmt
+        run: cargo fmt --check
+
+      - name: cargo clippy
+        run: cargo clippy -- -D warnings
+
+      - name: cargo test
+        run: cargo test
+
+      - name: cargo build release
+        run: cargo build --release
+
+      - name: upload release binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: auditforge-linux-x86_64
+          path: target/release/auditforge
+
+  rpm:
+    name: RPM package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: install rpmbuild
+        id: rpm
+        continue-on-error: true
+        run: sudo apt-get update && sudo apt-get install -y rpm
+
+      - name: build RPM
+        if: steps.rpm.outcome == 'success'
+        run: |
+          mkdir -p "$HOME/rpmbuild/SOURCES"
+          tar \
+            --exclude target \
+            --exclude .git \
+            -czf "$HOME/rpmbuild/SOURCES/auditforge-0.1.0.tar.gz" \
+            --transform 's,^,auditforge-0.1.0/,' \
+            Cargo.lock Cargo.toml LICENSE README.md SECURITY.md CHANGELOG.md \
+            src tests examples packaging
+          rpmbuild -ba packaging/auditforge.spec
+
+      - name: upload RPM
+        if: steps.rpm.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: auditforge-rpm
+          path: /home/runner/rpmbuild/RPMS/**/*.rpm
+          if-no-files-found: error

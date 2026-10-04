@@ -1,0 +1,5 @@
+type=SYSCALL msg=audit(1791115200.000:1234): arch=c000003e syscall=2 success=yes exit=3 a0=7ffc a1=0 items=1 ppid=100 pid=200 auid=0 uid=0 gid=0 euid=0 comm="cat" exe="/usr/bin/cat" key="open_watch"
+type=SYSCALL msg=audit(1791115201.500:1235): arch=c000003e syscall=59 success=no exit=1 ppid=200 pid=201 auid=1000 uid=1000 gid=1000 comm="bash" exe="/usr/bin/bash" key="exec"
+
+type=USER_AUTH msg=audit(1791115202.250:1236): pid=300 uid=0 auid=4294967295 ses=4294967295 msg='op=PAM:authentication acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'
+this is not an audit record
